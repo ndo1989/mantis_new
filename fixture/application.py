@@ -1,7 +1,6 @@
 from selenium import webdriver
-from python_training_mantis.fixture.session import SessionHelper
-from pythoncourse2020.fixture.group import GroupHelper
-from pythoncourse2020.fixture.contact import ContactHelper
+from fixture.session import SessionHelper
+
 
 class Application:
 
@@ -16,11 +15,7 @@ class Application:
         else:
             raise ValueError("Unrecognized browser %s" % browser)
         self.session = SessionHelper(self)
-        self.group = GroupHelper(self)
-        self.contact = ContactHelper(self)
         self.base_url = base_url
-
-
     def is_valid(self):
         try:
             self.wd.current_url
@@ -34,4 +29,3 @@ class Application:
 
     def destroy(self):
         self.wd.quit()
-

@@ -1,50 +1,39 @@
-class SessionHelper:
-    def __init__(self, app):
-        self.app = app
+from fixture.application import Application
+import pytest
+import json
+import os.path
 
-    def login(self, username, password):
-        wd = self.app.wd
-        self.app.open_home_page()
-        wd.find_element_by_name("username").click()
-        wd.find_element_by_name("username").clear()
-        wd.find_element_by_name("username").send_keys(username)
-        wd.find_element_by_xpath("//input[@value='Войти']").click()
-        wd.find_element_by_name("password").clear()
-        wd.find_element_by_name("password").send_keys(password)
-        wd.find_element_by_xpath("//input[@value='Войти']").click()
 
-    def ensure_login(self, username, password):
-        wd = self.app.wd
-        if self.is_logged_in():
-            if self.is_logged_in_as(username):
-                return
-            else:
-                self.logout()
-        self.login(username, password)
+fixture = None
+target = None
 
-    def logout(self):
-        wd = self.app.wd
-        try:
-            wd.find_element_by_css_selector("li[class='grey']")
-            wd.find_element_by_css_selector("span[class='user-info']").click()
-        except:
-            pass
-        wd.find_element_by_xpath("//a[contains(@href, '/mantisbt-2.24.4/logout_page.php')]").click()
-        wd.find_element_by_name("username")
+def load_config(file):
+    global target
+    if target is None:
+        config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), file)
+        with open(config_file) as f:
+            target = json.load(f)
+    return target
 
-    def ensure_logout(self):
-        wd = self.app.wd
-        if self.is_logged_in():
-            self.logout()
+@pytest.fixture
+def app(request):
+    global fixture
+    browser = request.config.getoption("--browser")
+    web_config = load_config(request.config.getoption("--target"))['web']
+    if fixture is None or not fixture.is_valid():
+        fixture = Application(browser=browser, base_url=web_config['baseUrl'])
+    return fixture
 
-    def is_logged_in(self):
-        wd = self.app.wd
-        n = wd.find_elements_by_xpath("(//a[contains(@href, '#')])[2]")
-        return len(n) > 0
 
-    def is_logged_in_as(self, username):
-        return self.get_logged_user() == username
+@pytest.fixture(scope="session", autouse=True)
+def stop(request):
+    def fin():
+        fixture.session.ensure_logout()
+        fixture.destroy()
+    request.addfinalizer(fin)
+    return fixture
 
-    def get_logged_user(self):
-        wd = self.app.wd
-        return wd.find_element_by_css_selector("span.user-info").text
+def pytest_addoption(parser):
+    parser.addoption("--browser", action="store", default="firefox")
+    parser.addoption("--target", action="store", default="target.json")
+
