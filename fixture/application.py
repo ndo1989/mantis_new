@@ -1,21 +1,22 @@
 from selenium import webdriver
 from fixture.session import SessionHelper
+from fixture.project import ProjectHelper
 
 
-class Application:
+class Application():
 
-    def __init__(self, browser, base_url):
-        if browser == "firefox":
+    def __init__(self, browser, baseUrl):
+        if browser == "Firefox":
             self.wd = webdriver.Firefox()
-            self.wd.implicitly_wait(1)
-        elif browser == "chrome":
+        elif browser == "Chrome":
             self.wd = webdriver.Chrome()
-        elif browser == "ie":
-            self.wd = webdriver.Ie()
         else:
             raise ValueError("Unrecognized browser %s" % browser)
+        self.wd.implicitly_wait(1)
         self.session = SessionHelper(self)
-        self.base_url = base_url
+        self.baseUrl = baseUrl
+        self.project = ProjectHelper(self)
+
     def is_valid(self):
         try:
             self.wd.current_url
@@ -25,7 +26,12 @@ class Application:
 
     def open_home_page(self):
         wd = self.wd
-        wd.get(self.base_url)
+        if not (wd.current_url.endswith("/index.php")):
+            wd.get(self.baseUrl)
+
+    def return_homepage(self):
+        wd = self.wd
+        wd.find_element_by_link_text("home page").click()
 
     def destroy(self):
         self.wd.quit()
