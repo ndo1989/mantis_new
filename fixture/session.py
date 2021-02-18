@@ -14,13 +14,26 @@ class SessionHelper:
         wd.find_element_by_name("password").send_keys(password)
         wd.find_element_by_xpath("//input[@value='Login']").click()
 
+    def ensure_login(self, login_name, password):
+        if self.is_logged_in():
+            if self.is_logged_in_as(login_name):
+                return
+            else:
+                self.logout()
+        self.login(login_name, password)
+
     def logout(self):
         wd = self.app.wd
-        wd.find_element_by_css_selector("span[class='user-info']").click()
+        try:
+            wd.find_element_by_css_selector("li[class='grey']")
+            wd.find_element_by_css_selector("span[class='user-info']").click()
+        except:
+            pass
         wd.find_element_by_xpath("//a[contains(@href, '/mantisbt-2.24.4/logout_page.php')]").click()
         wd.find_element_by_name("username")
 
     def ensure_logout(self):
+        wd = self.app.wd
         if self.is_logged_in():
             self.logout()
 
@@ -34,11 +47,3 @@ class SessionHelper:
     def get_logged_user(self):
         wd = self.app.wd
         return wd.find_element_by_css_selector("span.user-info").text
-
-    def ensure_login(self, login_name, password):
-        if self.is_logged_in():
-            if self.is_logged_in_as(login_name):
-                return
-            else:
-                self.logout()
-        self.login(login_name, password)

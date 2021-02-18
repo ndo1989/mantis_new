@@ -20,3 +20,4 @@ def test_add_project(app):
     assert len(old_projects) + 1 == len(new_projects)
     old_projects.append(project)
     assert sorted(new_projects, key=Project.id_or_max) == sorted(app.project.get_project_list(), key=Project.id_or_max)
+
